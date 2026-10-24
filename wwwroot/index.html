@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Moisty Canvas</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/lib/signalr.min.js" defer></script>
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header>
+    <div class="brand"><span class="brand-mark">▦</span> moisty<span class="muted">/canvas</span></div>
+    <div id="connection" class="status">Connecting…</div>
+  </header>
+  <main>
+    <div class="heading">
+      <div>
+        <h1>One pixel at a time.</h1>
+        <p>A tiny shared canvas. Pick a color, click a pixel, come back later.</p>
+      </div>
+      <div class="coords" id="coords">—, —</div>
+    </div>
+    <div class="layout">
+      <div class="board-shell">
+        <canvas id="board" width="256" height="256" aria-label="Collaborative pixel canvas"></canvas>
+      </div>
+      <aside>
+        <h2>Color</h2>
+        <div class="palette" id="palette" role="group" aria-label="Select pixel color"></div>
+        <div class="divider"></div>
+        <h2>Next pixel</h2>
+        <div id="cooldown" class="countdown">Loading…</div>
+        <p class="hint">No account needed. Your browser remembers its cooldown.</p>
+        <div id="message" role="status" aria-live="polite"></div>
+        <div class="divider"></div>
+        <p class="hint">Changes appear live for everyone online. White can erase a pixel.</p>
+      </aside>
+    </div>
+  </main>
+  <footer>Made for the internet, one little pixel at a time.</footer>
+</body>
+</html>
