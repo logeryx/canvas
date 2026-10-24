@@ -12,7 +12,7 @@ public static class CanvasSettings
     public const int Width = 128;
     public const int Height = 128;
     public const int SessionCooldownSeconds = 3;
-    public const int IpCooldownSeconds = 3;
+    public const int IpCooldownSeconds = 0;
 
     // Original version's palette, used only to upgrade an existing database.
     private static readonly string[] OldPalette =
