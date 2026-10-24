@@ -36,7 +36,8 @@ h2 { font-size: 13px; margin: 0; font-weight: 650; letter-spacing: .1px; }
 #nativeColor::-webkit-color-swatch { border: 1px solid #556070; border-radius: 5px; }
 #nativeColor::-moz-color-swatch { border: 1px solid #556070; border-radius: 5px; }
 .color-field { width: 100%; height: 150px; position: relative; cursor: crosshair; touch-action: none; border: 1px solid #ffffff2b; border-radius: 6px; overflow: hidden;
-  background-image: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, transparent); }
+  background-image: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, transparent);
+  background-origin: border-box; background-repeat: no-repeat; }
 .color-handle { position: absolute; width: 12px; height: 12px; border: 2px solid white; outline: 1px solid #0008; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 2px #0007; pointer-events: none; }
 .hue { display: block; width: 100%; margin: 15px 0 18px; height: 12px; appearance: none; -webkit-appearance: none; border: none; border-radius: 12px; cursor: pointer;
   background: linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00); }
