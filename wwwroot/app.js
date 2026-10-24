@@ -187,8 +187,86 @@ function pixelFromPointer(event) {
         y: Math.floor((event.clientY - rect.top - offsetY) / (rect.height * zoom) * board.height)
     };
 }
+// Mobile: a tap paints on release, a one-finger drag pans, and two fingers pinch to zoom.
+// Pointer Events + the existing .viewport { touch-action: none } prevent page zooming.
+const touches = new Map();
+const TAP_TOLERANCE = 8; // CSS pixels; don't paint after a drag/pinch.
+let touchGesture = null;
+
+function beginSingleTouch(point, allowTap) {
+    touchGesture = {
+        type: "single", id: point.id,
+        startX: point.x, startY: point.y,
+        startOffsetX: offsetX, startOffsetY: offsetY,
+        allowTap, moved: false
+    };
+}
+function beginPinch() {
+    const [a, b] = [...touches.values()];
+    const rect = viewport.getBoundingClientRect();
+    const centerX = (a.x + b.x) / 2 - rect.left;
+    const centerY = (a.y + b.y) / 2 - rect.top;
+    touchGesture = {
+        type: "pinch", firstId: a.id, secondId: b.id,
+        initialDistance: Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)),
+        initialZoom: zoom,
+        anchorX: (centerX - offsetX) / zoom,
+        anchorY: (centerY - offsetY) / zoom
+    };
+    viewport.classList.add("panning");
+}
+function moveTouchGesture() {
+    if (touches.size >= 2) {
+        const [a, b] = [...touches.values()];
+        if (touchGesture?.type !== "pinch" || touchGesture.firstId !== a.id || touchGesture.secondId !== b.id) {
+            beginPinch();
+        }
+        const rect = viewport.getBoundingClientRect();
+        const centerX = (a.x + b.x) / 2 - rect.left;
+        const centerY = (a.y + b.y) / 2 - rect.top;
+        const distance = Math.hypot(a.x - b.x, a.y - b.y);
+        zoom = Math.max(1, Math.min(24, touchGesture.initialZoom * distance / touchGesture.initialDistance));
+        offsetX = centerX - touchGesture.anchorX * zoom;
+        offsetY = centerY - touchGesture.anchorY * zoom;
+        updateView();
+    } else if (touches.size === 1) {
+        const point = touches.values().next().value;
+        if (touchGesture?.type !== "single" || touchGesture.id !== point.id) beginSingleTouch(point, false);
+        const dx = point.x - touchGesture.startX;
+        const dy = point.y - touchGesture.startY;
+        if (Math.hypot(dx, dy) > TAP_TOLERANCE) touchGesture.moved = true;
+        if (touchGesture.moved) {
+            offsetX = touchGesture.startOffsetX + dx;
+            offsetY = touchGesture.startOffsetY + dy;
+            updateView();
+            viewport.classList.add("panning");
+        }
+    }
+}
+function endTouch(event, cancelled) {
+    if (!touches.has(event.pointerId)) return;
+    const x = event.clientX, y = event.clientY;
+    const wasTap = !cancelled && touches.size === 1 &&
+        touchGesture?.type === "single" && touchGesture.id === event.pointerId &&
+        touchGesture.allowTap && !touchGesture.moved &&
+        Math.hypot(x - touchGesture.startX, y - touchGesture.startY) <= TAP_TOLERANCE;
+    touches.delete(event.pointerId);
+    if (viewport.hasPointerCapture(event.pointerId)) viewport.releasePointerCapture(event.pointerId);
+    if (touches.size >= 2) beginPinch();
+    else if (touches.size === 1) beginSingleTouch(touches.values().next().value, false);
+    else {
+        touchGesture = null;
+        viewport.classList.remove("panning");
+    }
+    if (wasTap) void placePixel(event);
+}
 viewport.addEventListener("pointermove", event => {
-    if (pan && event.pointerId === pan.pointerId) {
+    if (event.pointerType === "touch") {
+        if (touches.has(event.pointerId)) {
+            touches.set(event.pointerId, { id: event.pointerId, x: event.clientX, y: event.clientY });
+            moveTouchGesture();
+        }
+    } else if (pan && event.pointerId === pan.pointerId) {
         offsetX = pan.originX + event.clientX - pan.startX;
         offsetY = pan.originY + event.clientY - pan.startY;
         updateView();
@@ -197,9 +275,15 @@ viewport.addEventListener("pointermove", event => {
     coordsElement.textContent = (x >= 0 && y >= 0 && x < board.width && y < board.height)
         ? `${x}, ${y}` : "—, —";
 });
-viewport.addEventListener("pointerleave", () => { if (!pan) coordsElement.textContent = "—, —"; });
+viewport.addEventListener("pointerleave", () => { if (!pan && !touches.size) coordsElement.textContent = "—, —"; });
 viewport.addEventListener("pointerdown", event => {
-    if (event.button === 1 || event.button === 2 || (event.shiftKey && event.button === 0)) {
+    if (event.pointerType === "touch") {
+        event.preventDefault();
+        touches.set(event.pointerId, { id: event.pointerId, x: event.clientX, y: event.clientY });
+        viewport.setPointerCapture(event.pointerId);
+        if (touches.size === 1) beginSingleTouch(touches.get(event.pointerId), true);
+        else if (touches.size >= 2) beginPinch();
+    } else if (event.button === 1 || event.button === 2 || (event.shiftKey && event.button === 0)) {
         event.preventDefault();
         pan = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, originX: offsetX, originY: offsetY };
         viewport.setPointerCapture(event.pointerId);
@@ -208,15 +292,17 @@ viewport.addEventListener("pointerdown", event => {
         void placePixel(event);
     }
 });
-function endPan(event) {
-    if (pan && pan.pointerId === event.pointerId) {
+function endPointer(event, cancelled) {
+    if (event.pointerType === "touch") {
+        endTouch(event, cancelled);
+    } else if (pan && pan.pointerId === event.pointerId) {
         pan = null;
         viewport.classList.remove("panning");
         if (viewport.hasPointerCapture(event.pointerId)) viewport.releasePointerCapture(event.pointerId);
     }
 }
-viewport.addEventListener("pointerup", endPan);
-viewport.addEventListener("pointercancel", endPan);
+viewport.addEventListener("pointerup", event => endPointer(event, false));
+viewport.addEventListener("pointercancel", event => endPointer(event, true));
 
 function redraw() {
     if (!pixels) return;
