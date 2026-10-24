@@ -10,35 +10,40 @@
   <script src="/app.js" defer></script>
 </head>
 <body>
-  <header>
-    <div class="brand"><span class="brand-mark">▦</span> moisty<span class="muted">/canvas</span></div>
-    <div id="connection" class="status">Connecting…</div>
-  </header>
-  <main>
-    <div class="heading">
-      <div>
-        <h1>One pixel at a time.</h1>
-        <p>A tiny shared canvas. Pick a color, click a pixel, come back later.</p>
-      </div>
-      <div class="coords" id="coords">—, —</div>
-    </div>
-    <div class="layout">
+  <div id="connection" class="status" role="status">Connecting…</div>
+  <main class="layout">
+    <section class="canvas-area" aria-label="Shared pixel canvas">
       <div class="board-shell">
-        <canvas id="board" width="256" height="256" aria-label="Collaborative pixel canvas"></canvas>
+        <div id="viewport" class="viewport" aria-label="Canvas: scroll to zoom, shift-drag to pan">
+          <canvas id="board" width="128" height="128" aria-label="Draw on the shared canvas"></canvas>
+          <canvas id="gridOverlay" aria-hidden="true"></canvas>
+        </div>
       </div>
-      <aside>
-        <h2>Color</h2>
-        <div class="palette" id="palette" role="group" aria-label="Select pixel color"></div>
-        <div class="divider"></div>
-        <h2>Next pixel</h2>
-        <div id="cooldown" class="countdown">Loading…</div>
-        <p class="hint">No account needed. Your browser remembers its cooldown.</p>
-        <div id="message" role="status" aria-live="polite"></div>
-        <div class="divider"></div>
-        <p class="hint">Changes appear live for everyone online. White can erase a pixel.</p>
-      </aside>
-    </div>
+      <div class="board-meta">
+        <span class="coords" id="coords">—, —</span>
+        <span class="zoom" id="zoom">100%</span>
+      </div>
+    </section>
+
+    <aside class="controls">
+      <div class="section-heading"><h2>Color</h2><input id="nativeColor" type="color" value="#D14C4C" aria-label="System color picker" title="System color picker"></div>
+      <div id="colorField" class="color-field" role="group" aria-label="Saturation and brightness">
+        <div id="colorHandle" class="color-handle" aria-hidden="true"></div>
+      </div>
+      <input id="hue" class="hue" type="range" min="0" max="360" step="1" value="0" aria-label="Hue">
+      <label class="field-label" for="hex">HEX</label>
+      <div class="hex-row"><span id="preview" class="preview" aria-hidden="true"></span><input id="hex" type="text" value="#D14C4C" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Hex color"></div>
+      <div class="rgb-inputs">
+        <label>R<input id="red" type="number" min="0" max="255" aria-label="Red channel"></label>
+        <label>G<input id="green" type="number" min="0" max="255" aria-label="Green channel"></label>
+        <label>B<input id="blue" type="number" min="0" max="255" aria-label="Blue channel"></label>
+      </div>
+      <div class="divider"></div>
+      <div class="section-heading"><h2>Next pixel</h2></div>
+      <div id="cooldown" class="countdown">Loading…</div>
+      <div class="divider"></div>
+      <label class="grid-checkbox"><input type="checkbox" id="showGrid"><span>Show grid</span></label>
+    </aside>
   </main>
-  <footer>Made for the internet, one little pixel at a time.</footer>
 </body>
 </html>

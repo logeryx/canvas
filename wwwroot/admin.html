@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Canvas · Admin</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, sans-serif; background: #101218; color: #e9ecf3; }
+    body { min-height: 90vh; display: grid; place-items: center; margin: 0; }
+    main { width: min(310px, 90vw); }
+    h1 { font-size: 17px; margin: 0 0 20px; }
+    input, button { width: 100%; border-radius: 6px; font: inherit; padding: 10px 12px; }
+    input { border: 1px solid #404858; background: #1a1e27; color: inherit; }
+    button { margin-top: 12px; cursor: pointer; border: 0; background: #dedff5; color: #191b24; font-weight: 600; }
+    #result { font-size: 13px; color: #f4a0a0; margin-top: 12px; min-height: 20px; }
+    a { color: #aab8d8; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Canvas admin</h1>
+    <form id="unlock">
+      <input id="secret" type="password" placeholder="Admin key" aria-label="Admin key" autocomplete="off" required>
+      <button type="submit">Unlock</button>
+    </form>
+    <p id="result" role="status"></p>
+    <a href="/">Back to canvas</a>
+  </main>
+  <script>
+    document.querySelector('#unlock').addEventListener('submit', async event => {
+      event.preventDefault();
+      const result = document.querySelector('#result');
+      result.textContent = '';
+      try {
+        const response = await fetch('/api/admin/unlock', {
+          method: 'POST', credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ secret: document.querySelector('#secret').value })
+        });
+        if (response.ok) location.replace('/');
+        else result.textContent = response.status === 429 ? 'Too many attempts. Try again later.' : 'Invalid key, or admin mode is not configured.';
+      } catch (_) { result.textContent = 'Cannot connect to server.'; }
+    });
+  </script>
+</body>
+</html>
